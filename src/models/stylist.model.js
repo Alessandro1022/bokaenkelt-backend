@@ -88,6 +88,11 @@ const stylistSchema = new mongoose.Schema({
   location: {
     type: String,
     trim: true
+  },
+  tabs: {
+    type: [String],
+    enum: ["Info", "Calendar", "Photos And Reviews", "Contact"],
+    default: ["Calendar", "Contact"]
   }
 }, {
   timestamps: true
