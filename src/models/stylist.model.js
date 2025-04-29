@@ -91,7 +91,7 @@ const stylistSchema = new mongoose.Schema({
   },
   tabs: {
     type: [String],
-    enum: ["Info", "Calendar", "Photos And Reviews", "Contact"],
+    enum: ["Info", "Calendar", "Photos", "Reviews", "Contact"],
     default: ["Calendar", "Contact"]
   }
 }, {
