@@ -89,9 +89,6 @@ router.post('/', auth, async (req, res) => {
 // Create new rating for guest
 router.post('/guest', async (req, res) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      return res.status(201).json({ message: 'Rating created (mock)' });
-    }
 
     const rating = new Rating({
       ...req.body,
@@ -118,7 +115,7 @@ router.post('/guest', async (req, res) => {
       { reviews: totalReviews, rating: averageRating.toFixed(2) }
     );
 
-    res.status(200).json({ message: "Successfull" });
+    res.status(200).json({ status: "success", message: "Successfull" });
   } catch (error) {
     console.error('Error creating rating:', error);
     res.status(400).json({ message: 'Error creating rating' });
