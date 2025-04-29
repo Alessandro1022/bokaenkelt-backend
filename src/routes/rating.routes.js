@@ -28,7 +28,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // get ratings by stylist
-router.get('/stylist/:id', auth, async (req, res) => {
+router.get('/stylist/:id', async (req, res) => {
   try {
     const _id = req.params.id;
 
