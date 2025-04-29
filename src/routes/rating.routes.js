@@ -7,6 +7,44 @@ import Stylist from '../models/stylist.model.js';
 
 const router = express.Router();
 
+// get all ratings
+router.get('/', auth, async (req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      return res.status(201).json({ message: 'Rating created (mock)' });
+    }
+
+    const rating = await Rating.find({}, '-createdAt -updatedAt -__v');
+
+    if (!rating) {
+      return res.status(404).json({ status: "error", message: "Ratings not found", data: [] });
+    }
+
+    res.status(200).json({ status: "success", message: "Successfull", data: rating });
+  } catch (error) {
+    console.error('Error creating rating:', error);
+    res.status(400).json({ message: 'Error creating rating' });
+  }
+});
+
+// get ratings by stylist
+router.get('/stylist/:id', auth, async (req, res) => {
+  try {
+    const _id = req.params.id;
+
+    const ratings = await Rating.find({ stylist: _id }, '-updatedAt -createdAt -__v');
+
+    if (!ratings) {
+      return res.status(404).json({ status: "error", message: "Ratings not found", data: [] });
+    }
+
+    res.status(200).json({ status: "success", message: "Successfull", data: ratings });
+  } catch (error) {
+    console.error('Error creating rating:', error);
+    res.status(400).json({ message: 'Error creating rating' });
+  }
+});
+
 // Create new rating
 router.post('/', auth, async (req, res) => {
   try {
@@ -41,7 +79,7 @@ router.post('/', auth, async (req, res) => {
     );
 
 
-    res.status(200).json({ message: "Successfull" });
+    res.status(200).json({ status: "success", message: "Successfull" });
   } catch (error) {
     console.error('Error creating rating:', error);
     res.status(400).json({ message: 'Error creating rating' });
@@ -57,7 +95,6 @@ router.post('/guest', async (req, res) => {
 
     const rating = new Rating({
       ...req.body,
-      customer: new mongoose.Types.ObjectId("0000bdea0000000000000000")
     });
     await rating.save()
 

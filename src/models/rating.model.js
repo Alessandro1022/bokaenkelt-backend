@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 
 const ratingSchema = new mongoose.Schema({
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  name: {
+    type: String,
+    trim: true,
+    default: "Anonymous",
     required: true
   },
   stylist: {
@@ -14,6 +15,10 @@ const ratingSchema = new mongoose.Schema({
   rating: {
     type: mongoose.Schema.Types.Double,
     require: true,
+  },
+  review: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true
