@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema(
     stylist: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Stylist',
-      required: true
+      required: false,
+      default: null,
     },
     email: {
       type: String,

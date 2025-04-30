@@ -47,20 +47,13 @@ router.get('/', async (req, res) => {
 // Get stylist by ID
 router.get('/:id', async (req, res) => {
   try {
-    // In development, return mock data
-    if (process.env.NODE_ENV === 'development') {
-      const mockStylist = mockStylists.find(s => s._id === req.params.id);
-      if (mockStylist) {
-        return res.json(mockStylist);
-      }
-      return res.status(404).json({ message: 'Stylist not found' });
-    }
+    const stylist = await Stylist.findById(req.params.id, '-updatedAt -__v -createdAt');
 
-    const stylist = await Stylist.findById(req.params.id);
     if (!stylist) {
       return res.status(404).json({ message: 'Stylist not found' });
     }
-    res.json(stylist);
+
+    return res.status(200).json({ status: "success", data: stylist });
   } catch (error) {
     console.error('Error fetching stylist:', error);
     res.status(500).json({ message: 'Error fetching stylist' });

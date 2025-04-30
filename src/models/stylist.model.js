@@ -6,6 +6,11 @@ const stylistSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  hasPremium: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
   email: {
     type: String,
     required: true,
@@ -18,6 +23,10 @@ const stylistSchema = new mongoose.Schema({
     trim: true
   },
   specialties: {
+    type: [String],
+    trim: true
+  },
+  photos: {
     type: [String],
     trim: true
   },

@@ -14,7 +14,7 @@ router.get('/', auth, async (req, res) => {
       return res.json(mockBookings);
     }
 
-    if (req.user.role === "admin") {
+    if (["admin", "stylist"].includes(req.user.role)) {
       const bookings = await Booking.find({})
       // .populate('customer', 'name email')
       // .populate('stylist', 'name email');
@@ -114,10 +114,8 @@ router.post('/guest', async (req, res) => {
 // Update booking
 router.put('/:id', auth, async (req, res) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      return res.json({ message: 'Booking updated (mock)' });
-    }
-    if (req.user.role === "admin") {
+
+    if (["admin", "stylist"].includes(req.user.role)) {
       const booking = await Booking.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(req.params.id) },
         req.body,
@@ -139,8 +137,6 @@ router.put('/:id', auth, async (req, res) => {
       res.json(booking);
     }
   } catch (error) {
-    console.log("error", error);
-
     console.error('Error updating booking:', error);
     res.status(400).json({ message: 'Error updating booking' });
   }
@@ -153,7 +149,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.json({ message: 'Booking cancelled (mock)' });
     }
 
-    if (req.user.role === "admin") {
+    if (["admin", "stylist"].includes(req.user.role)) {
       const booking = await Booking.findOneAndUpdate(
         { _id: new mongoose.Types.ObjectId(req.params.id) },
         { status: 'Avbokad' },
