@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    stylist: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Stylist',
+      required: true
+    },
     email: {
       type: String,
       required: true,

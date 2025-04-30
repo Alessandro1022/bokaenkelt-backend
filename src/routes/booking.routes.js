@@ -34,6 +34,24 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+router.get('/stylist', auth, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ stylist: req.user.stylist });
+
+    if (!bookings) {
+      return res.status(404).json({ status: "error", message: "No booking found" });
+    }
+
+    return res.status(200).json({ status: "success", data: bookings });
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    if (process.env.NODE_ENV === 'development') {
+      return res.json(mockBookings);
+    }
+    res.status(500).json({ message: 'Error fetching bookings' });
+  }
+});
+
 // Get booking by ID
 router.get('/:id', async (req, res) => {
   try {
