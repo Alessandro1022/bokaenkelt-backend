@@ -95,8 +95,14 @@ const stylistSchema = new mongoose.Schema({
     trim: true
   },
   location: {
-    type: String,
-    trim: true
+    address: {
+      type: String,
+      trim: true
+    },
+    map: {
+      type: String,
+      trim: true
+    }
   },
   tabs: {
     type: [String],
