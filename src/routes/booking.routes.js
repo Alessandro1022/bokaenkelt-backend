@@ -91,7 +91,7 @@ router.post('/', auth, async (req, res) => {
 
     const customerEmail = req.user.email;
     const customerName = req.user.name || 'Customer';
-    const appointmentDate = `${req.body.date} ${req.body.time}` || 'Not specified';
+    const appointmentDate = `${req.body.date} kl. ${req.body.time}` || 'Not specified';
 
     await sendConfirmationEmail(customerEmail, customerName, appointmentDate);
 
@@ -117,7 +117,7 @@ router.post('/guest', async (req, res) => {
 
     const customerEmail = req.body.customerEmail;
     const customerName = req.body.customerName || 'Customer';
-    const appointmentDate = `${req.body.date} ${req.body.time}` || 'Not specified';
+    const appointmentDate = `${req.body.date} kl. ${req.body.time}` || 'Not specified';
 
     await sendConfirmationEmail(customerEmail, customerName, appointmentDate);
 
