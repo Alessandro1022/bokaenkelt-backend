@@ -64,6 +64,10 @@ const bookingSchema = new mongoose.Schema({
   },
   customerPhone: {
     type: String,
+    required: false
+  },
+  customerEmail: {
+    type: String,
     required: true
   },
   service: {
