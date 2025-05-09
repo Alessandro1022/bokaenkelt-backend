@@ -27,3 +27,23 @@ export const sendEmail = async (toEmail, appointmentDate) => {
         console.error('Error sending email:', error);
     }
 };
+
+export const sendConfirmationEmail = async (toEmail, name, appointmentDate) => {
+    try {
+        const info = await transporter.sendMail({
+            from: `"Your Company" <${process.env.EMAIL_USER}>`,
+            to: toEmail,
+            subject: 'Appointment Confirmation',
+            html: `
+        <h2>Hello ${name},</h2>
+        <p>Thank you for booking your appointment with us.</p>
+        <p><strong>Appointment Date:</strong> ${appointmentDate}</p>
+        <p>We look forward to seeing you!</p>
+      `
+        });
+
+        console.log('Email sent: ', info.messageId);
+    } catch (error) {
+        console.error('Email sending failed:', error);
+    }
+};

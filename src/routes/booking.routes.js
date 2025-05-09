@@ -5,6 +5,8 @@ import { auth } from '../middleware/auth.js';
 import Booking from '../models/booking.model.js';
 import { mockBookings } from '../data/mockData.js';
 
+import { sendConfirmationEmail } from "../config/mailer.js"
+
 const router = express.Router();
 
 // Get all bookings
@@ -86,6 +88,13 @@ router.post('/', auth, async (req, res) => {
       customer: req?.user?._id
     });
     await booking.save();
+
+    const customerEmail = req.user.email;
+    const customerName = req.user.name || 'Customer';
+    const appointmentDate = `${req.body.date} ${req.body.time}` || 'Not specified';
+
+    await sendConfirmationEmail(customerEmail, customerName, appointmentDate);
+
     res.status(201).json(booking);
   } catch (error) {
     console.error('Error creating booking:', error);
@@ -99,11 +108,19 @@ router.post('/guest', async (req, res) => {
     if (process.env.NODE_ENV === 'development') {
       return res.status(201).json({ message: 'Booking created (mock)' });
     }
+
     const booking = new Booking({
       ...req.body,
       customer: new mongoose.Types.ObjectId("0000bdea0000000000000000")
     });
     await booking.save();
+
+    const customerEmail = req.body.customerEmail;
+    const customerName = req.body.customerName || 'Customer';
+    const appointmentDate = `${req.body.date} ${req.body.time}` || 'Not specified';
+
+    await sendConfirmationEmail(customerEmail, customerName, appointmentDate);
+
     res.status(201).json(booking);
   } catch (error) {
     console.error('Error creating booking:', error);
