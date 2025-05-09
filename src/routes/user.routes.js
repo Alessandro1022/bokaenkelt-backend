@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import User from '../models/user.model.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -11,6 +12,14 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.enum(['customer', 'stylist', 'admin']).optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
+const updateUserSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(6).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
 });
@@ -101,5 +110,48 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Error logging in' });
   }
 });
+
+// Update User details
+router.put('/update', auth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const data = updateUserSchema.parse(req.body);
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (data.name) user.name = data.name;
+    if (data.email) user.email = data.email;
+    if (data.phone) user.phone = data.phone;
+    if (data.address) user.address = data.address;
+    if (data.password) user.password = data.password;
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    console.error(error);
+    res.status(500).json({ message: 'Error updating user' });
+  }
+});
+
 
 export default router; 
