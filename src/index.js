@@ -8,6 +8,7 @@ import stylistRoutes from './routes/stylist.routes.js';
 import bookingRoutes from './routes/booking.routes.js';
 import ratingRoutes from './routes/rating.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import { scheduleAppointmentReminders } from "./jobs/appointmentReminderJob.js"
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ const connectWithRetry = async () => {
         socketTimeoutMS: 45000,
       });
       console.log('MongoDB connected successfully');
+      scheduleAppointmentReminders();
       return;
     } catch (err) {
       retries++;
