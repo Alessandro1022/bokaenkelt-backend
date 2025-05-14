@@ -1,7 +1,9 @@
+import { z } from 'zod';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { z } from 'zod';
+
 import User from '../models/user.model.js';
+
 import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -11,7 +13,7 @@ const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['customer', 'stylist', 'admin']).optional(),
+  role: z.enum(['customer', 'stylist', 'admin', 'superadmin']).optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
 });
@@ -100,7 +102,7 @@ router.post('/login', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        stylist: user.stylist,
+        // stylist: user.stylist,
       },
     });
   } catch (error) {
@@ -139,9 +141,9 @@ router.put('/update', auth, async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone,
-        address: user.address,
         role: user.role,
+        // phone: user.phone,
+        // address: user.address,
       },
     });
   } catch (error) {

@@ -38,7 +38,7 @@ router.get('/', auth, async (req, res) => {
 
 router.get('/stylist', auth, async (req, res) => {
   try {
-    const bookings = await Booking.find({ stylist: req.user.stylist });
+    const bookings = await Booking.find({ stylist: req.user._id });
 
     if (!bookings) {
       return res.status(404).json({ status: "error", message: "No booking found" });

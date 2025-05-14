@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const userSchema = new mongoose.Schema(
+const superAdminSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -23,24 +23,17 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     role: {
+      required: true,
       type: String,
-      trim: true,
-      default: 'customer'
+      enum: ["superadmin"],
+      default: 'superadmin',
     },
-    phone: {
-      type: String,
-      trim: true,
-    },
-    address: {
-      type: String,
-      trim: true,
-      default: ""
-    },
-    profileImage: {
-      type: String,
-      trim: true,
-      default: ""
-    },
+    tokens: [{
+      token: {
+        type: String,
+        required: true,
+      },
+    }],
   },
   {
     timestamps: true,
@@ -48,7 +41,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
+superAdminSchema.pre('save', async function (next) {
   const user = this;
   if (user.isModified('password')) {
     user.password = await bcrypt.hash(user.password, 8);
@@ -57,7 +50,7 @@ userSchema.pre('save', async function (next) {
 });
 
 // Generate auth token
-userSchema.methods.generateAuthToken = async function () {
+superAdminSchema.methods.generateAuthToken = async function () {
   const user = this;
   const token = jwt.sign(
     { _id: user._id.toString() },
@@ -70,8 +63,8 @@ userSchema.methods.generateAuthToken = async function () {
 };
 
 // Find user by credentials
-userSchema.statics.findByCredentials = async (email, password) => {
-  const user = await User.findOne({ email });
+superAdminSchema.statics.findByCredentials = async (email, password) => {
+  const user = await SuperAdmin.findOne({ email });
   if (!user) {
     throw new Error('Invalid login credentials');
   }
@@ -83,7 +76,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
 };
 
 // Remove sensitive data when converting to JSON
-userSchema.methods.toJSON = function () {
+superAdminSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
 
@@ -93,9 +86,9 @@ userSchema.methods.toJSON = function () {
   return userObject;
 };
 
-userSchema.methods.comparePassword = async function (candidatePassword) {
+superAdminSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export const User = mongoose.model('User', userSchema);
-export default User; 
+export const SuperAdmin = mongoose.model('SuperAdmin', superAdminSchema);
+export default SuperAdmin; 

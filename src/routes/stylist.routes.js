@@ -1,11 +1,61 @@
-import express from 'express';
 import { z } from 'zod';
+import jwt from 'jsonwebtoken';
+import express from 'express';
 import User from '../models/user.model.js';
-import { auth, authorize } from '../middleware/auth.js';
 import Stylist from '../models/stylist.model.js';
+import { auth, authorize } from '../middleware/auth.js';
 import { mockStylists } from '../data/mockData.js';
+import multer from 'multer';
+import path from 'path';
+import fs from "fs"
+import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from "uuid"
 
 const router = express.Router();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const imagesPath = path.join(__dirname, '../../images');
+
+
+const coverImagestorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const userId = req.user._id;
+    const userFolder = path.join(imagesPath, userId.toString());
+
+    // Check if user-specific folder exists; if not, create it
+    if (!fs.existsSync(userFolder)) {
+      fs.mkdirSync(userFolder, { recursive: true });
+    }
+    cb(null, userFolder);
+  },
+  filename: (req, file, cb) => {
+    const extension = path.extname(file.originalname);
+    const fileName = `coverimage-${req.user._id}${extension}`;
+
+    cb(null, fileName);
+  }
+});
+const photosStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const userId = req.user._id;
+    const userFolder = path.join(imagesPath, userId.toString());
+
+    // Create folder if it doesn't exist
+    if (!fs.existsSync(userFolder)) {
+      fs.mkdirSync(userFolder, { recursive: true });
+    }
+    cb(null, userFolder);
+  },
+  filename: (req, file, cb) => {
+    const extension = path.extname(file.originalname);
+    const fileName = `photo-${uuidv4()}${extension}`;
+    cb(null, fileName);
+  }
+});
+const coverImageUpload = multer({ storage: coverImagestorage });
+const photosUpload = multer({ storage: photosStorage });
+
 
 // Validation schemas
 const updateStylistSchema = z.object({
@@ -22,6 +72,10 @@ const updateStylistSchema = z.object({
     coordinates: z.array(z.number()).length(2)
   }).optional(),
   profileImage: z.string().optional()
+});
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string(),
 });
 
 // Get all stylists
@@ -201,6 +255,130 @@ router.get('/near/:postalCode', async (req, res) => {
       message: 'Error fetching nearby stylists'
     });
   }
+});
+
+// STYLIST LOGIN
+router.post('/login', async (req, res) => {
+  try {
+    const validatedData = loginSchema.parse(req.body);
+
+    // Find user
+    const stylist = await Stylist.findOne({ email: validatedData.email });
+    if (!stylist) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isMatch = await stylist.comparePassword(validatedData.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate token
+    const token = jwt.sign(
+      { id: stylist._id, role: stylist.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: stylist._id,
+        name: stylist.name,
+        email: stylist.email,
+        role: stylist.role,
+        hasPremium: stylist.hasPremium
+        // stylist: stylist.stylist,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    res.status(500).json({ message: 'Error logging in' });
+  }
+});
+
+
+// UPDATE STYLIST PROFILE
+router.post('/update/profile/coverimage', auth, coverImageUpload.single('coverimage'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ status: "error", message: "Fail to upload cover image" });
+
+    const updatedStylistProfile = await Stylist.findOneAndUpdate({ _id: req.user._id }, { imageUrl: `images/${req.user._id}/${req.file.filename}` });
+    if (!updatedStylistProfile) return res.status(400).json({ status: "error", message: "Fail to save image url" });
+
+    res.status(200).json({ status: "success", imageUrl: `images/${req.user._id}/${req.file.filename}` })
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: "error", message: 'Server error' });
+  }
+});
+router.post('/update/profile/photos', auth, photosUpload.array('photos', 5), async (req, res) => {
+  try {
+    const files = req.files;
+    let photoStylist = null;
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ status: "error", message: "No photos uploaded" });
+    }
+
+    const uploadedPhotoPaths = files.map(file => `images/${req.user._id}/${file.filename}`);
+
+    if (uploadedPhotoPaths.length > 0) {
+      photoStylist = await Stylist.findOneAndUpdate({ _id: req.user._id }, { photos: uploadedPhotoPaths })
+    }
+
+    if (uploadedPhotoPaths.length <= 0 || !photoStylist) return res.status(400).json({ status: "error", message: "Fail to save photos" })
+
+    res.status(200).json({ status: "success", photos: uploadedPhotoPaths })
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+router.post('/update/profile/images/delete/:imageName', auth, async (req, res) => {
+  const { imageName } = req.params;
+  const userId = req.user._id;
+
+  if (!imageName) {
+    return res.status(400).json({ status: "error", message: "Image name is required" });
+  }
+
+  try {
+    const imagePath = path.join(__dirname, '../../images', userId.toString(), imageName);
+
+    // Check if file exists
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ status: "error", message: "Image not found" });
+    }
+
+    // Delete the file
+    fs.unlinkSync(imagePath);
+
+    // Optional: remove reference from DB
+    const stylistImages = await Stylist.findOneAndUpdate(
+      { _id: userId },
+      { $pull: { photos: `images/${userId}/${imageName}` } },
+      { new: true }
+    );
+
+    if (!stylistImages) return res.status(400).json({ status: "error", message: "Fail to remove image in database" });
+
+    res.status(200).json({ status: "success", message: "Image deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Failed to delete image" });
+  }
+});
+router.post('/update/profile', auth, async (req, res) => {
+  const stylistProfileInfo = await Stylist.findOneAndUpdate({ _id: req.user._id }, { ...req.body });
+
+  if (!stylistProfileInfo) return res.status(400).json({ status: "error", message: "Fail to update stylist profile" })
+
+  res.status(200).send({ status: "success", message: 'Profile updated successfully' });
 });
 
 // Helper function to get coordinates from postal code

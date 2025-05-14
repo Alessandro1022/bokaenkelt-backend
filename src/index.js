@@ -8,6 +8,8 @@ import stylistRoutes from './routes/stylist.routes.js';
 import bookingRoutes from './routes/booking.routes.js';
 import ratingRoutes from './routes/rating.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import superAdminRoutes from "./routes/superadmin.routes.js"
+
 import { scheduleAppointmentReminders } from "./jobs/appointmentReminderJob.js"
 
 dotenv.config();
@@ -39,6 +41,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/stylists', stylistRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/superadmin', superAdminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
